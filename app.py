@@ -4,19 +4,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from influxdb_client import InfluxDBClient
 
-# ==================================================
-# CONFIGURACIÓN GENERAL
-# ==================================================
-
 st.set_page_config(
     page_title="Smart Greenhouse Lab",
     page_icon="🌿",
     layout="wide"
 )
-
-# ==================================================
-# ESTILOS VISUALES
-# ==================================================
 
 st.markdown("""
 <style>
@@ -24,13 +16,11 @@ st.markdown("""
     background: linear-gradient(135deg, #07111f, #0b1728, #102235);
     color: white;
 }
-
 .block-container {
     padding-top: 1.5rem;
     padding-bottom: 2rem;
     max-width: 1500px;
 }
-
 .hero {
     background: linear-gradient(135deg, rgba(24,119,78,0.95), rgba(14,83,57,0.95));
     padding: 40px;
@@ -38,48 +28,34 @@ st.markdown("""
     margin-bottom: 25px;
     border: 1px solid rgba(255,255,255,0.12);
     box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-    backdrop-filter: blur(12px);
 }
-
 .hero-title {
     font-size: 48px;
     font-weight: 800;
     color: white;
-    margin-bottom: 10px;
 }
-
 .hero-subtitle {
     font-size: 18px;
     color: rgba(255,255,255,0.88);
     line-height: 1.6;
 }
-
 .metric-card {
     background: rgba(255,255,255,0.06);
     border-radius: 22px;
     padding: 24px;
     border: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(12px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    transition: all 0.3s ease;
 }
-
-.metric-card:hover {
-    transform: translateY(-4px);
-}
-
 .metric-title {
     color: rgba(255,255,255,0.72);
     font-size: 15px;
     margin-bottom: 10px;
 }
-
 .metric-value {
     font-size: 36px;
     font-weight: 800;
     color: white;
 }
-
 .section-title {
     font-size: 28px;
     font-weight: 750;
@@ -87,7 +63,6 @@ st.markdown("""
     margin-top: 32px;
     margin-bottom: 15px;
 }
-
 .info-card {
     background: rgba(255,255,255,0.055);
     padding: 22px;
@@ -96,7 +71,6 @@ st.markdown("""
     color: rgba(255,255,255,0.88);
     line-height: 1.6;
 }
-
 .alert-ok {
     background: rgba(25,135,84,0.18);
     border-left: 5px solid #22c55e;
@@ -105,7 +79,6 @@ st.markdown("""
     color: white;
     margin-bottom: 10px;
 }
-
 .alert-warning {
     background: rgba(255,193,7,0.16);
     border-left: 5px solid #ffc107;
@@ -114,7 +87,6 @@ st.markdown("""
     color: white;
     margin-bottom: 10px;
 }
-
 .alert-danger {
     background: rgba(220,53,69,0.18);
     border-left: 5px solid #dc3545;
@@ -123,44 +95,14 @@ st.markdown("""
     color: white;
     margin-bottom: 10px;
 }
-
 section[data-testid="stSidebar"] {
     background: #08131f;
-    border-right: 1px solid rgba(255,255,255,0.08);
 }
-
 section[data-testid="stSidebar"] * {
     color: white;
 }
-
-[data-testid="stDataFrame"] {
-    border-radius: 18px;
-    overflow: hidden;
-}
-
-.js-plotly-plot {
-    border-radius: 20px !important;
-    overflow: hidden !important;
-}
-
-hr {
-    border-color: rgba(255,255,255,0.08);
-}
-
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #1f8f63;
-    border-radius: 10px;
-}
 </style>
 """, unsafe_allow_html=True)
-
-# ==================================================
-# ENCABEZADO
-# ==================================================
 
 st.markdown("""
 <div class="hero">
@@ -168,14 +110,10 @@ st.markdown("""
     <div class="hero-subtitle">
         Sistema inteligente de monitoreo ambiental y estabilidad física para un invernadero experimental.
         Consulta datos desde InfluxDB y visualiza temperatura, humedad y vibraciones estructurales
-        mediante una interfaz IoT limpia, clara y orientada a la toma de decisiones.
+        mediante una interfaz IoT clara, moderna y orientada a la toma de decisiones.
     </div>
 </div>
 """, unsafe_allow_html=True)
-
-# ==================================================
-# SIDEBAR
-# ==================================================
 
 st.sidebar.title("⚙️ Configuración")
 
@@ -196,6 +134,7 @@ time_range = range_map[range_option]
 temp_high_limit = st.sidebar.slider("Temperatura alta °C", 25, 45, 30)
 temp_low_limit = st.sidebar.slider("Temperatura baja °C", 5, 25, 18)
 humidity_low_limit = st.sidebar.slider("Humedad baja %", 10, 80, 40)
+humidity_high_limit = st.sidebar.slider("Humedad alta %", 50, 100, 80)
 motion_limit = st.sidebar.slider("Movimiento/vibración", 5, 30, 15)
 
 st.sidebar.markdown("---")
@@ -207,21 +146,12 @@ st.sidebar.markdown("""
 - Movimiento: vibraciones, golpes o manipulación física.
 """)
 
-# ==================================================
-# CONEXIÓN A INFLUXDB
-# ==================================================
-
 url = st.secrets["INFLUX_URL"]
 token = st.secrets["INFLUX_TOKEN"]
 org = st.secrets["INFLUX_ORG"]
 bucket = st.secrets["INFLUX_BUCKET"]
 
-client = InfluxDBClient(
-    url=url,
-    token=token,
-    org=org
-)
-
+client = InfluxDBClient(url=url, token=token, org=org)
 query_api = client.query_api()
 
 query = f'''
@@ -231,47 +161,29 @@ from(bucket: "{bucket}")
   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
 '''
 
-# ==================================================
-# FUNCIONES
-# ==================================================
-
 def get_last_value(dataframe, column):
     if column in dataframe.columns and not dataframe[column].dropna().empty:
         return dataframe[column].dropna().iloc[-1]
     return None
-
 
 def format_value(value, suffix="", decimals=1):
     if value is None:
         return "Sin dato"
     return f"{value:.{decimals}f}{suffix}"
 
-
-def update_chart_layout(fig, title_size=20):
+def update_chart_layout(fig):
     fig.update_layout(
         height=360,
         margin=dict(l=20, r=20, t=60, b=20),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.03)",
         font=dict(color="white"),
-        title_font=dict(size=title_size, color="white"),
-        legend=dict(
-            bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white")
-        ),
-        xaxis=dict(
-            showgrid=True,
-            gridcolor="rgba(255,255,255,0.08)",
-            zeroline=False
-        ),
-        yaxis=dict(
-            showgrid=True,
-            gridcolor="rgba(255,255,255,0.08)",
-            zeroline=False
-        )
+        title_font=dict(size=20, color="white"),
+        legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color="white")),
+        xaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)", zeroline=False),
+        yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)", zeroline=False)
     )
     return fig
-
 
 def make_line_chart(dataframe, y_column, title, y_label):
     fig = px.line(
@@ -284,8 +196,7 @@ def make_line_chart(dataframe, y_column, title, y_label):
     )
     return update_chart_layout(fig)
 
-
-def make_gauge(value, title, max_value, good_limit=None):
+def make_gauge(value, title, max_value):
     if value is None:
         value = 0
 
@@ -320,10 +231,6 @@ def make_gauge(value, title, max_value, good_limit=None):
     )
 
     return fig
-
-# ==================================================
-# DASHBOARD
-# ==================================================
 
 try:
     df = query_api.query_data_frame(query)
@@ -369,10 +276,6 @@ try:
     humedad_actual = get_last_value(df, "humidity")
     movimiento_actual = get_last_value(df, "movement_intensity")
 
-    # ==================================================
-    # KPIS
-    # ==================================================
-
     st.markdown('<div class="section-title">Indicadores principales</div>', unsafe_allow_html=True)
 
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
@@ -409,10 +312,6 @@ try:
         </div>
         """, unsafe_allow_html=True)
 
-    # ==================================================
-    # ESTADO GENERAL
-    # ==================================================
-
     st.markdown('<div class="section-title">Estado operativo del invernadero</div>', unsafe_allow_html=True)
 
     alertas = []
@@ -423,8 +322,11 @@ try:
         elif temperatura_actual < temp_low_limit:
             alertas.append(("warning", "Temperatura baja: revisar aislamiento térmico o condiciones externas."))
 
-    if humedad_actual is not None and humedad_actual < humidity_low_limit:
-        alertas.append(("warning", "Humedad baja: revisar riego, nebulización o ventilación excesiva."))
+    if humedad_actual is not None:
+        if humedad_actual < humidity_low_limit:
+            alertas.append(("warning", "Humedad baja: revisar riego, nebulización o ventilación excesiva."))
+        elif humedad_actual > humidity_high_limit:
+            alertas.append(("warning", "Humedad alta: revisar ventilación, condensación o exceso de riego."))
 
     if movimiento_actual is not None and movimiento_actual > motion_limit:
         alertas.append(("danger", "Movimiento anormal: posible vibración, golpe, inclinación o manipulación física del módulo."))
@@ -437,40 +339,20 @@ try:
     else:
         for tipo, mensaje in alertas:
             css_class = "alert-danger" if tipo == "danger" else "alert-warning"
-            st.markdown(
-                f'<div class="{css_class}">⚠️ {mensaje}</div>',
-                unsafe_allow_html=True
-            )
-
-    # ==================================================
-    # GAUGES
-    # ==================================================
+            st.markdown(f'<div class="{css_class}">⚠️ {mensaje}</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="section-title">Lectura rápida del sistema</div>', unsafe_allow_html=True)
 
     g1, g2, g3 = st.columns(3)
 
     with g1:
-        st.plotly_chart(
-            make_gauge(temperatura_actual, "Temperatura °C", 50),
-            use_container_width=True
-        )
+        st.plotly_chart(make_gauge(temperatura_actual, "Temperatura °C", 50), use_container_width=True)
 
     with g2:
-        st.plotly_chart(
-            make_gauge(humedad_actual, "Humedad %", 100),
-            use_container_width=True
-        )
+        st.plotly_chart(make_gauge(humedad_actual, "Humedad %", 100), use_container_width=True)
 
     with g3:
-        st.plotly_chart(
-            make_gauge(movimiento_actual, "Movimiento", 30),
-            use_container_width=True
-        )
-
-    # ==================================================
-    # GRÁFICOS
-    # ==================================================
+        st.plotly_chart(make_gauge(movimiento_actual, "Movimiento", 30), use_container_width=True)
 
     st.markdown('<div class="section-title">Tendencias temporales</div>', unsafe_allow_html=True)
 
@@ -479,24 +361,14 @@ try:
     with left:
         if "temperature" in df.columns:
             st.plotly_chart(
-                make_line_chart(
-                    df,
-                    "temperature",
-                    "Temperatura del ambiente",
-                    "Temperatura °C"
-                ),
+                make_line_chart(df, "temperature", "Temperatura del ambiente", "Temperatura °C"),
                 use_container_width=True
             )
 
     with right:
         if "humidity" in df.columns:
             st.plotly_chart(
-                make_line_chart(
-                    df,
-                    "humidity",
-                    "Humedad relativa",
-                    "Humedad %"
-                ),
+                make_line_chart(df, "humidity", "Humedad relativa", "Humedad %"),
                 use_container_width=True
             )
 
@@ -532,10 +404,6 @@ try:
             )
             st.plotly_chart(update_chart_layout(fig_accel), use_container_width=True)
 
-    # ==================================================
-    # DESCRIPCIÓN
-    # ==================================================
-
     st.markdown('<div class="section-title">Interpretación del caso de uso</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -547,10 +415,6 @@ try:
     que podrían afectar el entorno de cultivo o la confiabilidad del experimento.
     </div>
     """, unsafe_allow_html=True)
-
-    # ==================================================
-    # DATOS CRUDOS
-    # ==================================================
 
     with st.expander("📋 Ver datos recientes desde InfluxDB"):
         st.dataframe(df.tail(50), use_container_width=True)
